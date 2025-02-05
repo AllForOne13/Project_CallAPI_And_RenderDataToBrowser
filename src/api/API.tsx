@@ -1,56 +1,39 @@
 
 
-
+import { useEffect } from 'react';
 import { Candidate } from '../interfaces/Candidate.interface';
 
-const searchGithub = async (): Promise<Candidate[]> => {
+export const searchGithub = async (): Promise<Candidate[]> => {
   try {
     const start = Math.floor(Math.random() * 100000000) + 1;
     const token = import.meta.env.VITE_GITHUB_TOKEN;
-    const apiUrl = import.meta.env.VITE_API_URL; // Example of accessing another variable
-    const otherSecret = import.meta.env.VITE_OTHER_SECRET; // Another example
-
-    // Log the variables to verify they are being read correctly
-    console.log('VITE_GITHUB_TOKEN:', token);
-    console.log('VITE_API_URL:', apiUrl);
-    console.log('VITE_OTHER_SECRET:', otherSecret);
 
     if (!token) {
       throw new Error('GitHub token is not defined. Check your environment variables.');
     }
 
-    const response = await fetch(
-      `https://api.github.com/users?since=${start}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`https://api.github.com/users?since=${start}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (!response.ok) {
       throw new Error(`Invalid API response: ${response.statusText}`);
     }
 
     const data: Candidate[] = await response.json();
-    console.log('Data:', data);
     return data;
+
   } catch (err) {
-    console.log('An error occurred:', err);
+    console.error('An error occurred:', err);
     return [];
   }
 };
 
-const searchGithubUser = async (username: string): Promise<Candidate> => {
+export const searchGithubUser = async (username: string): Promise<Candidate> => {
   try {
     const token = import.meta.env.VITE_GITHUB_TOKEN;
-    const apiUrl = import.meta.env.VITE_API_URL; // Example of accessing another variable
-    const otherSecret = import.meta.env.VITE_OTHER_SECRET; // Another example
-
-    // Log the variables to verify they are being read correctly
-    console.log('VITE_GITHUB_TOKEN:', token);
-    console.log('VITE_API_URL:', apiUrl);
-    console.log('VITE_OTHER_SECRET:', otherSecret);
 
     if (!token) {
       throw new Error('GitHub token is not defined. Check your environment variables.');
@@ -69,7 +52,7 @@ const searchGithubUser = async (username: string): Promise<Candidate> => {
     const data = await response.json();
     return {
       avatar_url: data.avatar_url,
-      name: data.name || 'N/A', // Provide default values if any properties are missing
+      name: data.name || 'N/A',
       login: data.login,
       location: data.location || 'N/A',
       email: data.email || 'N/A',
@@ -92,11 +75,12 @@ const searchGithubUser = async (username: string): Promise<Candidate> => {
       twitter_username: data.twitter_username || 'N/A',
       public_repos: data.public_repos,
       followers: data.followers,
-      created_at: data.created_at
+      created_at: data.created_at,
     };
+
   } catch (err) {
-    console.log('An error occurred:', err);
-    // Provide default values in case of error
+    console.error('An error occurred:', err);
+
     return {
       avatar_url: '',
       name: 'N/A',
@@ -122,13 +106,35 @@ const searchGithubUser = async (username: string): Promise<Candidate> => {
       twitter_username: 'N/A',
       public_repos: 0,
       followers: 0,
-      created_at: ''
+      created_at: '',
     };
   }
 };
 
-const getCandidates = async (): Promise<Candidate[]> => {
-  return await searchGithub();
+export const getCandidates = async (): Promise<Candidate[]> => {
+  const candidates = await searchGithub();
+  console.log(candidates);
+
+  // Call searchGithubUser for a specific username
+  const username = 'example_username';
+  const candidate = await searchGithubUser(username);
+  console.log(candidate);
+
+  return candidates;
 };
 
-export { searchGithub, searchGithubUser, getCandidates };
+// React component to use getCandidates
+const MyComponent = () => {
+  useEffect(() => {
+    const fetchCandidates = async () => {
+      const candidates = await getCandidates();
+      console.log('Fetched candidates:', candidates);
+    };
+
+    fetchCandidates();
+  }, []);
+
+  return <div>Check the console for fetched candidates.</div>;
+};
+
+export default MyComponent;
